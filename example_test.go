@@ -6,7 +6,7 @@ package ljson_test
 
 import (
 	"fmt"
-	"github.com/daviddengcn/ljson"
+	"github.com/bububa/ljson"
 	"io"
 	"log"
 	"strings"

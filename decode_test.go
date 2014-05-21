@@ -706,13 +706,13 @@ func TestCheckUnmarshal(t *testing.T) {
 		{`[1, 2, 3]`, []int{1, 2, 3}},
 		{`[1, 2, 3,,]`, []int{1, 2, 3}},
 		{`[1, 2,,, 3]`, []int{1, 2, 3}},
-		{`{"D": "david"}`, map[string]string{"D":"david"}},
-		{`{,"D": "david",}`, map[string]string{"D":"david"}},
-		{`{D: "david"}`, map[string]string{"D":"david"}},
-		{`{"A":"apple","D": "David",}`, map[string]string{"A":"apple", "D":"David"}},
-		{`{A:"apple", D: "David",}`, map[string]string{"A":"apple", "D":"David"}},
-		{`{"A":"apple" "D": "David"}`, map[string]string{"A":"apple", "D":"David"}},
-		{`{A:"apple" D: "David"}`, map[string]string{"A":"apple", "D":"David"}},
+		{`{"D": "david"}`, map[string]string{"D": "david"}},
+		{`{,"D": "david",}`, map[string]string{"D": "david"}},
+		{`{D: "david"}`, map[string]string{"D": "david"}},
+		{`{"A":"apple","D": "David",}`, map[string]string{"A": "apple", "D": "David"}},
+		{`{A:"apple", D: "David",}`, map[string]string{"A": "apple", "D": "David"}},
+		{`{"A":"apple" "D": "David"}`, map[string]string{"A": "apple", "D": "David"}},
+		{`{A:"apple" D: "David"}`, map[string]string{"A": "apple", "D": "David"}},
 		{`{"A":"apple" "M": {"D": "David"}}`, map[string]interface{}{
 			"A": "apple",
 			"M": map[string]interface{}{"D": "David"}}},
@@ -722,10 +722,10 @@ func TestCheckUnmarshal(t *testing.T) {
 		{`{"A":"apple" "M": {"D": "David" "C": "Cat"}}`, map[string]interface{}{
 			"A": "apple",
 			"M": map[string]interface{}{"D": "David", "C": "Cat"}}},
-		{`{"D": [1 2 3 4]}`, map[string][]float64{
-			"D": []float64{1., 2., 3., 4.}}},
-		{`{"D": [1 2 3 {"A": "apple"}]}`, map[string]interface{}{
-			"D": []interface{}{1., 2., 3., map[string]interface{}{"A": "apple"}}}},
+		{`{"D": [1 2 3 4]}`, map[string][]uint64{
+			"D": []uint64{1, 2, 3, 4}}},
+		{`{"D": [1 2 3.5 {"A": "apple"}]}`, map[string]interface{}{
+			"D": []interface{}{uint64(1), uint64(2), float64(3.5), map[string]interface{}{"A": "apple"}}}},
 	}
 
 	for i, c := range cases {
@@ -734,7 +734,7 @@ func TestCheckUnmarshal(t *testing.T) {
 			t.Errorf("CheckUnmarshal(%d) %s: %v", i, c.json, err)
 			continue
 		}
-		
+
 		s := v.Elem().Interface()
 		if !reflect.DeepEqual(s, c.val) {
 			t.Errorf("CheckUnmarshal(%d) %s: expected %v(%v), but got %v(%v)",

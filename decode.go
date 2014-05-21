@@ -113,7 +113,7 @@ func (d *decodeState) init(data []byte) *decodeState {
 
 // error aborts the decoding by panicking with err.
 func (d *decodeState) error(err error) {
-//buf := make([]byte, 1024); fmt.Println("error:", string(buf[:runtime.Stack(buf, false)]))
+	//buf := make([]byte, 1024); fmt.Println("error:", string(buf[:runtime.Stack(buf, false)]))
 	panic(err)
 }
 
@@ -815,11 +815,19 @@ func (d *decodeState) literalInterface() interface{} {
 		if c != '-' && (c < '0' || c > '9') {
 			d.error(errPhase)
 		}
-		n, err := strconv.ParseFloat(string(item), 64)
-		if err != nil {
-			d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0.0)})
+		if strings.Contains(string(item), ".") {
+			n, err := strconv.ParseFloat(string(item), 64)
+			if err != nil {
+				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0.0)})
+			}
+			return n
+		} else {
+			n, err := strconv.ParseUint(string(item), 10, 64)
+			if err != nil {
+				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0.0)})
+			}
+			return n
 		}
-		return n
 	}
 	panic("unreachable")
 }
