@@ -821,10 +821,16 @@ func (d *decodeState) literalInterface() interface{} {
 				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0.0)})
 			}
 			return n
+		} else if c == '-' {
+			n, err := strconv.ParseInt(string(item), 10, 64)
+			if err != nil {
+				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(-1)})
+			}
+			return n
 		} else {
 			n, err := strconv.ParseUint(string(item), 10, 64)
 			if err != nil {
-				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0.0)})
+				d.saveError(&json.UnmarshalTypeError{"number " + string(item), reflect.TypeOf(0)})
 			}
 			return n
 		}
