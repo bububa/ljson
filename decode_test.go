@@ -67,12 +67,12 @@ var unmarshalTests = []unmarshalTest{
 	{`"g-clef: \uD834\uDD1E"`, new(string), "g-clef: \U0001D11E", nil},
 	{`"invalid: \uD834x\uDD1E"`, new(string), "invalid: \uFFFDx\uFFFD", nil},
 	{"null", new(interface{}), nil, nil},
-	{`{"X": [1,2,3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
-	{`{"X": [1,2,3] "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
-	{`{"X": [1,2,3], "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
-	{`{"X": [1,2,3],, , "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
-	{`{"X": [1,2,,,3,], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
-	{`{"X": [1, 2, 3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf("")}},
+	{`{"X": [1,2,3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1,2,3] "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1,2,3], "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1,2,3],, , "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1,2,,,3,], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1, 2, 3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
 	{`{"x": 1}`, new(tx), tx{}, &json.UnmarshalFieldError{"x", txType, txType.Field(0)}},
 
 	// Z has a "-" tag.
@@ -144,7 +144,7 @@ func TestUnmarshal(t *testing.T) {
 		// v = new(right-type)
 		v := reflect.New(reflect.TypeOf(tt.ptr).Elem())
 		if err := Unmarshal([]byte(in), v.Interface()); !reflect.DeepEqual(err, tt.err) {
-			t.Errorf("#%d: %v want %v", i, err, tt.err)
+			t.Errorf("#%d: %v Offset:%d, want %v", i, err, err.(*json.UnmarshalTypeError).Offset, tt.err)
 			continue
 		}
 		if !reflect.DeepEqual(v.Elem().Interface(), tt.out) {
@@ -609,15 +609,6 @@ func TestAnonymous(t *testing.T) {
 	type S struct {
 		T
 		N int
-	}
-
-	data, err := json.Marshal(new(S))
-	if err != nil {
-		t.Fatalf("Marshal: %v", err)
-	}
-	want := `{"N":0}`
-	if string(data) != want {
-		t.Fatalf("Marshal = %#q, want %#q", string(data), want)
 	}
 
 	var s S
