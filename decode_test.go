@@ -67,12 +67,12 @@ var unmarshalTests = []unmarshalTest{
 	{`"g-clef: \uD834\uDD1E"`, new(string), "g-clef: \U0001D11E", nil},
 	{`"invalid: \uD834x\uDD1E"`, new(string), "invalid: \uFFFDx\uFFFD", nil},
 	{"null", new(interface{}), nil, nil},
-	{`{"X": [1,2,3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
-	{`{"X": [1,2,3] "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
-	{`{"X": [1,2,3], "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
-	{`{"X": [1,2,3],, , "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
-	{`{"X": [1,2,,,3,], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
-	{`{"X": [1, 2, 3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{"array", reflect.TypeOf(""), 7}},
+	{`{"X": [1,2,3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
+	{`{"X": [1,2,3] "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
+	{`{"X": [1,2,3], "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
+	{`{"X": [1,2,3],, , "Y": 4,}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
+	{`{"X": [1,2,,,3,], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
+	{`{"X": [1, 2, 3], "Y": 4}`, new(T), T{Y: 4}, &json.UnmarshalTypeError{Value: "array", Type: reflect.TypeOf("")}},
 	{`{"x": 1}`, new(tx), tx{}, &json.UnmarshalFieldError{"x", txType, txType.Field(0)}},
 
 	// Z has a "-" tag.
@@ -144,7 +144,7 @@ func TestUnmarshal(t *testing.T) {
 		// v = new(right-type)
 		v := reflect.New(reflect.TypeOf(tt.ptr).Elem())
 		if err := Unmarshal([]byte(in), v.Interface()); !reflect.DeepEqual(err, tt.err) {
-			t.Errorf("#%d: %v Offset:%d, want %v", i, err, err.(*json.UnmarshalTypeError).Offset, tt.err)
+			t.Errorf("#%d: %v want %v", i, err, tt.err)
 			continue
 		}
 		if !reflect.DeepEqual(v.Elem().Interface(), tt.out) {
@@ -713,10 +713,10 @@ func TestCheckUnmarshal(t *testing.T) {
 		{`{"A":"apple" "M": {"D": "David" "C": "Cat"}}`, map[string]interface{}{
 			"A": "apple",
 			"M": map[string]interface{}{"D": "David", "C": "Cat"}}},
-		{`{"D": [1 2 3 4]}`, map[string][]uint64{
-			"D": []uint64{1, 2, 3, 4}}},
-		{`{"D": [1 2 3.5 {"A": "apple"}]}`, map[string]interface{}{
-			"D": []interface{}{uint64(1), uint64(2), float64(3.5), map[string]interface{}{"A": "apple"}}}},
+		{`{"D": [1 2 3 4]}`, map[string][]float64{
+			"D": []float64{1., 2., 3., 4.}}},
+		{`{"D": [1 2 3 {"A": "apple"}]}`, map[string]interface{}{
+			"D": []interface{}{1., 2., 3., map[string]interface{}{"A": "apple"}}}},
 	}
 
 	for i, c := range cases {
