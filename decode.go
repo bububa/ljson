@@ -12,7 +12,7 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Unmarshal function that processes JSON loosely based on a schema
-func Unmarshal(data []byte, schema interface{}) error {
+func Unmarshal(data []byte, schema any) error {
 	if repaired, err := jsonrepair.JSONRepair(string(data)); err == nil {
 		data = []byte(repaired)
 	}
@@ -20,7 +20,7 @@ func Unmarshal(data []byte, schema interface{}) error {
 }
 
 // Unmarshal function that processes JSON loosely based on a schema
-func unmarshal(data []byte, schema interface{}) error {
+func unmarshal(data []byte, schema any) error {
 	schemaValue := reflect.ValueOf(schema)
 	schemaType := schemaValue.Type()
 
@@ -41,7 +41,7 @@ func unmarshal(data []byte, schema interface{}) error {
 		return nil
 	}
 
-	var raw interface{}
+	var raw any
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %w", err)
 	}
@@ -56,11 +56,11 @@ func unmarshal(data []byte, schema interface{}) error {
 			return unmarshal([]byte(jsonString), schema)
 		}
 		// Handle case when the schema is a slice
-		sliceValue := reflect.MakeSlice(schemaType, 0, 0)
-		rawArray, ok := raw.([]interface{})
+		rawArray, ok := raw.([]any)
 		if !ok {
 			return fmt.Errorf("expected an array in the input data")
 		}
+		sliceValue := reflect.MakeSlice(schemaType, 0, 0)
 
 		for _, item := range rawArray {
 			// Create a new element for the slice and unmarshal into it
@@ -87,8 +87,11 @@ func unmarshal(data []byte, schema interface{}) error {
 		if jsonString, ok := raw.(string); ok && isJSONString(jsonString) {
 			return unmarshal([]byte(jsonString), schema)
 		}
+		if _, ok := raw.(map[string]any); !ok {
+			return fmt.Errorf("expected a struct in the input data")
+		}
 		mapValue := reflect.MakeMap(schemaType)
-		rawMap, ok := raw.(map[string]interface{})
+		rawMap, ok := raw.(map[string]any)
 		if !ok {
 			return fmt.Errorf("expected an map in the input data")
 		}
@@ -119,8 +122,11 @@ func unmarshal(data []byte, schema interface{}) error {
 		if jsonString, ok := raw.(string); ok && isJSONString(jsonString) {
 			return unmarshal([]byte(jsonString), schema)
 		}
+		if _, ok := raw.(map[string]any); !ok {
+			return fmt.Errorf("expected a struct in the input data")
+		}
 		// Handle case when the schema is a struct
-		for key, value := range raw.(map[string]interface{}) {
+		for key, value := range raw.(map[string]any) {
 			field := findFieldByJSONTag(schemaValue, key)
 			if field.IsValid() && field.CanSet() {
 				// Process the value based on the schema type
@@ -184,7 +190,7 @@ func findFieldByJSONTag(v reflect.Value, jsonTag string) reflect.Value {
 }
 
 // Converts values to match expected schema types
-func processValue(value interface{}, expectedType reflect.Type) (interface{}, error) {
+func processValue(value any, expectedType reflect.Type) (any, error) {
 	// Handle stringified JSON arrays or objects
 	if expectedType.Kind() == reflect.Slice || expectedType.Kind() == reflect.Map || expectedType.Kind() == reflect.Struct || expectedType.Kind() == reflect.Ptr || expectedType.Kind() == reflect.Interface {
 		newValue := reflect.New(expectedType).Interface()
@@ -316,6 +322,6 @@ func isJSONString(str string) bool {
 	if len(str) < 2 || (str[0] != '{' && str[0] != '[') {
 		return false
 	}
-	var temp interface{}
+	var temp any
 	return json.Unmarshal([]byte(str), &temp) == nil
 }
